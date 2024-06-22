@@ -1,6 +1,5 @@
 import axios from 'axios';
 
-// Función para obtener categorías de un servidor
 export const getCategories = (server) => {
   const url = `${server.url}/player_api.php`;
   return axios.get(url, {
@@ -12,7 +11,6 @@ export const getCategories = (server) => {
   });
 };
 
-// Función para obtener canales de una categoría de un servidor
 export const getChannels = (server, categoryId) => {
   const url = `${server.url}/player_api.php`;
   return axios.get(url, {

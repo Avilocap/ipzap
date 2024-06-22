@@ -3,11 +3,10 @@ import AddServer from './components/AddServer';
 import CategoryList from './components/CategoryList';
 import ChannelList from './components/ChannelList';
 import VidstackPlayer from './components/VidstackPlayer';
-import { getCategories, getChannels } from './api'; // Importa las funciones
+import { getCategories, getChannels } from './api';
 
 const App = () => {
   const [servers, setServers] = useState(() => {
-    // Recuperar servidores desde localStorage al cargar la aplicación
     const savedServers = localStorage.getItem('servers');
     return savedServers ? JSON.parse(savedServers) : [];
   });
@@ -17,9 +16,10 @@ const App = () => {
   const [categories, setCategories] = useState([]);
   const [channels, setChannels] = useState([]);
   const [error, setError] = useState(null);
+  const [loadingCategories, setLoadingCategories] = useState(false);
+  const [loadingChannels, setLoadingChannels] = useState(false);
 
   useEffect(() => {
-    // Guardar servidores en localStorage cada vez que cambian
     localStorage.setItem('servers', JSON.stringify(servers));
   }, [servers]);
 
@@ -36,22 +36,30 @@ const App = () => {
   }, [selectedServer, selectedCategory]);
 
   const fetchCategories = async (server) => {
+    setLoadingCategories(true);
+    setError(null);
     try {
       const response = await getCategories(server);
       setCategories(response.data);
     } catch (error) {
-      console.error('Error al cargar categorías:', error);
-      setError('Error al cargar categorías.');
+      console.error('Error loading categories:', error);
+      setError('Error loading categories.');
+    } finally {
+      setLoadingCategories(false);
     }
   };
 
   const fetchChannels = async (server, categoryId) => {
+    setLoadingChannels(true);
+    setError(null);
     try {
       const response = await getChannels(server, categoryId);
       setChannels(response.data);
     } catch (error) {
-      console.error('Error al cargar canales:', error);
-      setError('Error al cargar canales.');
+      console.error('Error loading channels:', error);
+      setError('Error loading channels.');
+    } finally {
+      setLoadingChannels(false);
     }
   };
 
@@ -60,14 +68,18 @@ const App = () => {
   };
 
   const handleSelectServer = (serverId) => {
-    setSelectedServer(servers.find(s => s.id === serverId));
+    const server = servers.find(s => s.id === serverId);
+    setSelectedServer(server);
     setSelectedCategory(null);
     setSelectedChannel(null);
+    setCategories([]);
+    setChannels([]);
   };
 
   const handleSelectCategory = (categoryId) => {
     setSelectedCategory(categoryId);
     setSelectedChannel(null);
+    setChannels([]);
   };
 
   const handleSelectChannel = (channelId) => {
@@ -80,7 +92,7 @@ const App = () => {
       <AddServer onAdd={handleAddServer} />
       {servers.length > 0 && (
         <div>
-          <h2>Servidores</h2>
+          <h2>Servers</h2>
           <ul>
             {servers.map((server) => (
               <li key={server.id} onClick={() => handleSelectServer(server.id)}>
@@ -92,9 +104,17 @@ const App = () => {
       )}
       {selectedServer && (
         <>
-          <CategoryList categories={categories} onSelect={handleSelectCategory} />
+          {loadingCategories ? (
+            <p>Loading categories...</p>
+          ) : (
+            <CategoryList categories={categories} onSelect={handleSelectCategory} />
+          )}
           {selectedCategory && (
-            <ChannelList channels={channels} onSelect={handleSelectChannel} />
+            loadingChannels ? (
+              <p>Loading channels...</p>
+            ) : (
+              <ChannelList channels={channels} onSelect={handleSelectChannel} />
+            )
           )}
           {selectedChannel && (
             <VidstackPlayer
