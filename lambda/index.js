@@ -41,26 +41,26 @@ exports.handler = async (event) => {
 
             let body = [];
             res.on('data', (chunk) => {
-                console.log(`Received chunk of size: ${chunk.length}`);
+                // console.log(`Received chunk of size: ${chunk.length}`);
                 body.push(chunk);
             });
 
             res.on('end', () => {
-                const responseBody = Buffer.concat(body);
+                const responseBody = Buffer.concat(body).toString();
                 const base64Body = responseBody.toString('base64');
-                console.log("Full Response Body (decoded):", responseBody.toString());
-                console.log("Response body size (base64 encoded):", base64Body.length);
+                // console.log("Full Response Body (decoded):", responseBody.toString());
+                // console.log("Response body size (base64 encoded):", base64Body.length);
 
                 resolve({
                     statusCode: res.statusCode,
                     headers: {
-                        ...res.headers,
                         'Access-Control-Allow-Origin': '*',
                         'Access-Control-Allow-Methods': 'GET,OPTIONS',
-                        'Access-Control-Allow-Headers': '*'
+                        'Access-Control-Allow-Headers': '*',
+                        'Content-Type': res.headers['content-type'] || 'application/octet-stream',
                     },
-                    body: base64Body,
-                    isBase64Encoded: true
+                    body: responseBody,
+                    isBase64Encoded: false
                 });
             });
         });
